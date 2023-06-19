@@ -10,13 +10,10 @@ require("dotenv").config()
  * @type import('hardhat/config').HardhatUserConfig
  */
 
-// const SCROLL_RPC_URL = process.env.SCROLL_RPC_URL
-// const TAIKO_RPC_URL = process.env.TAIKO_RPC_URL
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x"
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY
-// Your API key for Etherscan, obtain one at https://etherscan.io/
-// const REPORT_GAS = process.env.REPORT_GAS || false
+const REPORT_GAS = process.env.REPORT_GAS || false
 
 module.exports = {
     defaultNetwork: "hardhat",
@@ -27,12 +24,7 @@ module.exports = {
         localhost: {
             chainId: 31337,
         },
-        goerli: {
-            url: "https://rpc.ankr.com/eth_goerli",
-            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            saveDeployments: true,
-            chainId: 5,
-        },
+
         polygonMumbai: {
             url: "https://rpc.ankr.com/polygon_mumbai",
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
@@ -45,70 +37,77 @@ module.exports = {
             saveDeployments: true,
             chainId: 534353,
         },
-        taiko: {
-            url: "https://rpc.a2.taiko.xyz",
+
+        avalancheFujiTestnet: {
+            url: "https://rpc.ankr.com/avalanche_fuji",
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
             saveDeployments: true,
-            chainId: 167004,
+            chainId: 43113,
         },
-        chiado: {
-            url: "https://rpc.chiadochain.net",
-            gasPrice: 1000000000,
-            saveDeployments: true,
+        arbitrumGoerli: {
+            url: "https://endpoints.omniatech.io/v1/arbitrum/goerli/public",
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            chainId: 10200,
+            saveDeployments: true,
+            chainId: 421613,
         },
-        gnosis: {
-            url: "https://gnosis.blockpi.network/v1/rpc/public",
-            gasPrice: 2000000000,
-            saveDeployments: true,
+        baseTestnet: {
+            url: "https://goerli.base.org",
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
-            chainId: 100,
+            saveDeployments: true,
+            chainId: 84531,
+        },
+        mantleTestnet: {
+            url: "https://rpc.testnet.mantle.xyz",
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            saveDeployments: true,
+            chainId: 5001,
         },
     },
-    // etherscan: {
-    //     // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
-    //     apiKey: {
-    //         goerli: ETHERSCAN_API_KEY,
-    //         chiado: ETHERSCAN_API_KEY,
-    //         polygonMumbai: POLYGONSCAN_API_KEY,
-    //         scroll: ETHERSCAN_API_KEY,
-    //         taiko: ETHERSCAN_API_KEY,
-    //     },
-    //     customChains: [
-    //         {
-    //             network: "scroll",
-    //             chainId: 534353,
-    //             urls: {
-    //                 apiURL: "https://blockscout.scroll.io/api",
-    //                 browserURL: "https://blockscout.scroll.io/",
-    //             },
-    //         },
-    //         {
-    //             network: "taiko",
-    //             chainId: 167004,
-    //             urls: {
-    //                 apiURL: "https://explorer.a2.taiko.xyz/api",
-    //                 browserURL: "https://explorer.a2.taiko.xyz/",
-    //             },
-    //         },
-    //         {
-    //             network: "chiado",
-    //             chainId: 10200,
-    //             urls: {
-    //                 apiURL: "https://blockscout.chiadochain.net/api",
-    //                 browserURL: "https://blockscout.chiadochain.net/",
-    //             },
-    //         },
-    //     ],
-    // },
-    // gasReporter: {
-    //     enabled: REPORT_GAS,
-    //     currency: "USD",
-    //     outputFile: "gas-report.txt",
-    //     noColors: true,
-    //     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
-    // },
+    etherscan: {
+        // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
+        apiKey: {
+            goerli: ETHERSCAN_API_KEY,
+            arbitrumGoerli: ETHERSCAN_API_KEY,
+            polygonMumbai: POLYGONSCAN_API_KEY,
+            scroll: ETHERSCAN_API_KEY,
+            mantleTestnet: ETHERSCAN_API_KEY,
+            baseTestnet: ETHERSCAN_API_KEY,
+            avalancheFujiTestnet: ETHERSCAN_API_KEY,
+        },
+        customChains: [
+            {
+                network: "scroll",
+                chainId: 534353,
+                urls: {
+                    apiURL: "https://blockscout.scroll.io/api",
+                    browserURL: "https://blockscout.scroll.io/",
+                },
+            },
+            {
+                network: "mantleTestnet",
+                chainId: 5001,
+                urls: {
+                    apiURL: "https://explorer.testnet.mantle.xyz/api",
+                    browserURL: "https://explorer.testnet.mantle.xyz/",
+                },
+            },
+            {
+                network: "baseTestnet",
+                chainId: 84531,
+                urls: {
+                    apiURL: "https://goerli.basescan.org/api",
+                    browserURL: "https://goerli.basescan.org/",
+                },
+            },
+        ],
+    },
+    gasReporter: {
+        enabled: REPORT_GAS,
+        currency: "USD",
+        outputFile: "gas-report.txt",
+        noColors: true,
+        coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+    },
     contractSizer: {
         runOnCompile: false,
         only: ["EntryPoint"],
@@ -122,7 +121,7 @@ module.exports = {
     solidity: {
         compilers: [
             {
-                version: "0.8.12",
+                version: "0.8.13",
                 settings: {
                     optimizer: {
                         enabled: true,

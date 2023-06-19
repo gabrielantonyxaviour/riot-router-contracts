@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.6.1",
-    "@nomiclabs/hardhat-ethers": "^2.2.2"
+    "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "@routerprotocol/evm-gateway-contracts": "^1.1.13"
   }
 }
