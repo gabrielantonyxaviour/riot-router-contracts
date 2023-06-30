@@ -15,8 +15,6 @@ const deployGeneral = async function (hre) {
     const riot = await deploy("TheRiotProtocolGeneral", {
         from: deployer,
         args: [
-            constructorParams[network.config.chainId].name,
-            constructorParams[network.config.chainId].symbol,
             constructorParams[network.config.chainId].gatewayAddress,
             "0x71B43a66324C7b80468F1eE676E7FCDaF63eB6Ac",
         ],
@@ -26,8 +24,6 @@ const deployGeneral = async function (hre) {
     log(`TheRiotProtocolGeneral at ${riot.address}`)
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         await verify(riot.address, [
-            constructorParams[network.config.chainId].name,
-            constructorParams[network.config.chainId].symbol,
             constructorParams[network.config.chainId].gatewayAddress,
             "0x71B43a66324C7b80468F1eE676E7FCDaF63eB6Ac",
         ])

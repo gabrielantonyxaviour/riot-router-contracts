@@ -35,12 +35,15 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
         string uri;
     }
 
-    struct TransferParams {
-        uint256 organisationId;
-        Device device;
-        bytes metadataUrl;
+    struct TransferSendRiotKeyParams {
+        uint256 tokenId;
+        address caller;
     }
-
+    struct TransferReceiveRiotKeyParams {
+        uint256 tokenId;
+        address caller;
+        bytes32 riotKey;
+    }
     // uint256 private _deviceCount;
     uint256 private _organisationsCount;
     uint256 private _devicesCount;
@@ -50,6 +53,7 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
     mapping(uint256 => mapping(uint256 => Device)) private organisationToDevices;
     mapping(uint256 => Device) private devices;
     mapping(address => bool) private deviceMinted;
+    mapping(uint256 => string[]) private devicesMintedCrossChain;
     address private _owner;
 
     event OrganisationCreated(uint256 indexed organisationId, Organisation organisation);
@@ -88,7 +92,6 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
         _;
     }
     modifier checkIfDeviceAddresssMinted(address deviceId) {
-        require(deviceMinted[deviceId], "Device not minted.");
         _;
     }
     modifier onlyOrganisationAdmin(uint256 organisationId) {
@@ -167,6 +170,7 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
         organisationToDevices[organisationId][_tokenId].sessionSalt = newSessionSalt;
         devices[_tokenId].sessionSalt = newSessionSalt;
         _safeTransfer(from, _subscriber, _tokenId, "");
+
         emit DeviceTransferred(organisationId, _tokenId, devices[_tokenId].deviceId, _subscriber);
     }
 
@@ -246,24 +250,46 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
 
     /**
      * @dev Generates a RIOT key for the subscriber of a device.
-     * @param _deviceId The device address.
      * @return The RIOT key for the subscriber of the device.
      */
-    function generateRiotKeyForSubscriber(address _deviceId, uint256 tokenId)
-        public
-        view
-        checkIfDeviceAddresssMinted(_deviceId)
-        returns (bytes32)
-    {
+    function generateRiotKeyForSubscriber(uint256 tokenId) public view returns (bytes32) {
         // Check if the received data is in the valid devices
-        require(devices[tokenId].subscriber == msg.sender, "Unauthorized User");
+        if (!deviceMinted[devices[tokenId].deviceId]) {
+            return bytes32(0);
+        }
+        if (devices[tokenId].subscriber != msg.sender) {
+            return bytes32(uint256(1));
+        }
 
         bytes32[] memory hashes = new bytes32[](6);
         hashes[0] = devices[tokenId].firmwareHash;
         hashes[1] = devices[tokenId].deviceDataHash;
         hashes[2] = devices[tokenId].deviceGroupIdHash;
-        hashes[3] = bytes32(bytes20(_deviceId));
+        hashes[3] = bytes32(bytes20(devices[tokenId].deviceId));
         hashes[4] = bytes32(bytes20(msg.sender));
+        hashes[5] = devices[tokenId].sessionSalt;
+        return getMerkleRoot(hashes);
+    }
+
+    function _generateRiotKeyForSubscriberCrossChain(uint256 tokenId, address caller)
+        internal
+        view
+        returns (bytes32)
+    {
+        // Check if the received data is in the valid devices
+        if (!deviceMinted[devices[tokenId].deviceId]) {
+            return bytes32(0);
+        }
+        if (devices[tokenId].subscriber != caller) {
+            return bytes32(uint256(1));
+        }
+
+        bytes32[] memory hashes = new bytes32[](6);
+        hashes[0] = devices[tokenId].firmwareHash;
+        hashes[1] = devices[tokenId].deviceDataHash;
+        hashes[2] = devices[tokenId].deviceGroupIdHash;
+        hashes[3] = bytes32(bytes20(devices[tokenId].deviceId));
+        hashes[4] = bytes32(bytes20(caller));
         hashes[5] = devices[tokenId].sessionSalt;
         return getMerkleRoot(hashes);
     }
@@ -294,39 +320,48 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
 
     function transferCrossChain(
         string calldata destChainId,
-        TransferParams memory transferParams,
-        bytes calldata requestMetadata
-    ) public payable checkIfDeviceAddresssMinted(transferParams.device.deviceId) {
+        TransferReceiveRiotKeyParams memory,
+        bytes calldata
+    ) public payable {
         require(
             keccak256(abi.encodePacked(ourContractOnChains[destChainId])) !=
                 keccak256(abi.encodePacked("")),
             "contract on dest not set"
         );
-        require(msg.sender == transferParams.device.subscriber, "Unauthorized User");
-        transferParams.metadataUrl = bytes(tokenURI(transferParams.device.tokenId));
-        bytes memory packet = abi.encode(transferParams);
-        bytes memory requestPacket = abi.encode(ourContractOnChains[destChainId], packet);
-
-        gatewayContract.iSend{value: msg.value}(
-            1,
-            0,
-            string(""),
-            destChainId,
-            requestMetadata,
-            requestPacket
-        );
+        // DO NOTHING
     }
 
     function iReceive(
-        string memory, // requestSender,
+        string memory requestSender,
         bytes memory packet,
         string memory srcChainId
     ) external override returns (bytes memory) {
+        require(
+            keccak256(abi.encodePacked(ourContractOnChains[srcChainId])) !=
+                keccak256(abi.encodePacked("")),
+            "contract on dest not set"
+        );
+
+        require(
+            keccak256(abi.encodePacked(ourContractOnChains[srcChainId])) ==
+                keccak256(abi.encodePacked(requestSender)),
+            "request sender not valid"
+        );
         require(msg.sender == address(gatewayContract), "only gateway");
-
-        // Do Nothing
-
-        return abi.encode(srcChainId);
+        TransferSendRiotKeyParams memory requestData = abi.decode(
+            packet,
+            (TransferSendRiotKeyParams)
+        );
+        bytes32 riotKey = _generateRiotKeyForSubscriberCrossChain(
+            requestData.tokenId,
+            requestData.caller
+        );
+        TransferReceiveRiotKeyParams memory receiveData = TransferReceiveRiotKeyParams(
+            requestData.tokenId,
+            requestData.caller,
+            riotKey
+        );
+        return abi.encode(receiveData);
     }
 
     function getRequestMetadata(

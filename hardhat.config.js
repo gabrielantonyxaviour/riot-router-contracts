@@ -13,6 +13,8 @@ require("dotenv").config()
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x"
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY
+const ARBISCAN_API_KEY = process.env.ARBISCAN_API_KEY
+const SNOWTACE_API_KEY=process.env.SNOWTACE_API_KEY
 const REPORT_GAS = process.env.REPORT_GAS || false
 
 module.exports = {
@@ -24,7 +26,12 @@ module.exports = {
         localhost: {
             chainId: 31337,
         },
-
+        goerli: {
+            url: "https://rpc.ankr.com/eth_goerli",
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            saveDeployments: true,
+            chainId: 5,
+        },
         polygonMumbai: {
             url: "https://rpc.ankr.com/polygon_mumbai",
             accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
@@ -67,12 +74,12 @@ module.exports = {
         // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
         apiKey: {
             goerli: ETHERSCAN_API_KEY,
-            arbitrumGoerli: ETHERSCAN_API_KEY,
+            arbitrumGoerli: ARBISCAN_API_KEY,
             polygonMumbai: POLYGONSCAN_API_KEY,
             scroll: ETHERSCAN_API_KEY,
             mantleTestnet: ETHERSCAN_API_KEY,
             baseTestnet: ETHERSCAN_API_KEY,
-            avalancheFujiTestnet: ETHERSCAN_API_KEY,
+            avalancheFujiTestnet: SNOWTACE_API_KEY,
         },
         customChains: [
             {

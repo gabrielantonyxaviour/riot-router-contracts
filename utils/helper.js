@@ -25,6 +25,11 @@ const constructorParams = {
         name: "TheRiotProtocolAvalancheFujiTestnet",
         symbol: "TRPAFT",
     },
+    5: {
+        gatewayAddress: "0x94caA85bC578C05B22BDb00E6Ae1A34878f047F7",
+        name: "TheRiotProtocolGoerliTestnet",
+        symbol: "TRPGT",
+    },
 }
 module.exports = {
     constructorParams,
