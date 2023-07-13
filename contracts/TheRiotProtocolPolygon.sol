@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
     struct Organisation {
+        uint256 id;
         string name;
         string symbol;
         address creator;
@@ -50,7 +51,7 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
 
     mapping(address => Organisation[]) private ownerToOrganisations;
     mapping(uint256 => Organisation) private organisations;
-    mapping(uint256 => mapping(uint256 => Device)) private organisationToDevices;
+    mapping(uint256 => Device[]) private organisationToDevices;
     mapping(uint256 => Device) private devices;
     mapping(address => bool) private deviceMinted;
     mapping(uint256 => string[]) private devicesMintedCrossChain;
@@ -111,6 +112,7 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
     ) public {
         _organisationsCount += 1;
         Organisation memory _organisation = Organisation(
+            _organisationsCount - 1,
             _name,
             _symbol,
             msg.sender,
@@ -142,6 +144,7 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
         _safeMint(msg.sender, _tokenId);
         _setTokenURI(_tokenId, params.uri);
         devices[_devicesCount] = newDevice;
+        organisationToDevices[params.organisationId].push(newDevice);
         _devicesCount += 1;
         emit DeviceCreated(params.organisationId, newDevice);
     }
@@ -152,6 +155,10 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
 
     function getOrganisation(uint256 organisationId) public view returns (Organisation memory) {
         return organisations[organisationId];
+    }
+
+    function isDeviceMinted(address deviceId) public view returns (bool) {
+        return deviceMinted[deviceId];
     }
 
     function setSubscriberAddress(
@@ -294,12 +301,28 @@ contract TheRiotProtocolPolygon is ERC721, ERC721URIStorage, IDapp {
         return getMerkleRoot(hashes);
     }
 
-    function getOrganisations() public view returns (Organisation[] memory _organisations) {
-        _organisations = ownerToOrganisations[msg.sender];
+    function getOrganisations(address user)
+        public
+        view
+        returns (Organisation[] memory _organisations)
+    {
+        _organisations = ownerToOrganisations[user];
+    }
+
+    function getOrganisationDevices(uint256 organisationId)
+        public
+        view
+        returns (Device[] memory _devices)
+    {
+        _devices = organisationToDevices[organisationId];
     }
 
     function getDevice(uint256 _tokenId) public view returns (Device memory) {
         return devices[_tokenId];
+    }
+
+    function getDevicesCount() public view returns (uint256) {
+        return _devicesCount;
     }
 
     // Router functions
